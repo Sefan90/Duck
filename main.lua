@@ -1,84 +1,121 @@
-local bump = require "bump"
-local temp = ""
+local flux = require "flux"
 
+--TODO Fixa en funktion som kolla collision mot objekt som kommer.
 function love.load()
 	width, height = love.graphics.getDimensions()
-
-	world = bump.newWorld()
+	mapsize = height/15
+	rowcounter = 1
+	mapmoveobjects = {}
 
 	player = {
 		name = 'player',
-		x = 128,
-		y = 96,
-		w = 16,
-		h = 16,
-		speed = 120
+		lastkey = nil,
+		x = math.floor((width/2)/mapsize)*mapsize,
+		y = math.floor((height/2)/mapsize)*mapsize,
+		w = mapsize,
+		h = mapsize,
+		speed = 0.2
 	}
-	world:add(player,player.x,player.y,player.w,player.h)
 
-	mapsize = 16
-	mapx = width/2-mapsize*3.5
-	mapy = height/2-mapsize*3.5
-	map = {{1,1,1,1,1},{1,0,0,0,1},{1,0,0,0,1},{1,0,0,0,1},{1,1,1,1,1}}
-	for i = 1, #map do
-		for j = 1, #map do
-			if map[i][j] == 1 then
-				world:add("map"..i..j,mapx+i*mapsize,mapy+j*mapsize,mapsize,mapsize)
-			end
+	map = {}
+	for i = 1, 13 do
+		if i == 5 or i == 6 or i == 7 or i == 8 or i == 9 then
+			map[i] = {1,1,1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,1}
+		else
+			map[i] = {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
 		end
 	end
 
 	box = {
 		name = 'box',
-		x = 136,
-		y = 0,
-		w = 16,
-		h = 16,
-		speed = 120
+		x = math.floor((width/2)/mapsize)*mapsize,
+		y = height,
+		w = mapsize,
+		h = mapsize,
+		speed = 3
 	}
-	world:add(box,box.x,box.y,box.w,box.h)
 end
 
 function love.update(dt)
-	if love.keyboard.isDown('right','d') then
-		moveplayer(player.speed,0,dt)
-	elseif love.keyboard.isDown('left','a') then
-		moveplayer(-player.speed,0,dt)
-	elseif love.keyboard.isDown('down','s') then
-		moveplayer(0,player.speed,dt)
-	elseif love.keyboard.isDown('up','w') then
-		moveplayer(0,-player.speed,dt)
-	end
-	if box.y > width then
+	if box.y >= height then
 		box.y = 0
-	else
-		local actualX, actualY, cols, len = world:move(box,box.x,box.y+box.speed*dt,playerFilter)
-		box.x,box.y = actualX, actualY
+		box.x = math.floor((width/2)/mapsize)*mapsize-3*mapsize+math.random(5)*mapsize
+		flux.to(box, box.speed, {x = box.x,y = height}):ease("linear")
 	end
+	flux.update(dt)
 end
 
 function love.draw()
 	love.graphics.rectangle('fill', player.x, player.y, player.w, player.h)
 	love.graphics.rectangle('fill', box.x, box.y, box.w, box.h)
-	love.graphics.print(temp,16,16)
 	for i = 1, #map do
-		for j = 1, #map do
+		for j = 1, #map[1] do
 			if map[i][j] == 0 then
-				love.graphics.rectangle('line',mapx+i*mapsize,mapy+j*mapsize,mapsize,mapsize)
+				love.graphics.rectangle('line',(j)*mapsize,(i)*mapsize,mapsize,mapsize)
 			end
 		end
 	end
 end
 
-function moveplayer(x,y,dt) 
-	local actualX, actualY, cols, len = world:move(player,player.x+x*dt,player.y+y*dt,playerFilter)
-	player.x, player.y = actualX, actualY
-end
-
-playerFilter = function(item, other)
-	if string.find(item.name,"box") then
-		return "cross"
+--TODO fixa så man kan läsa in en mapp och spawna objekt från den.
+function moveboxes()
+	for i = rowcounter-50, rowcounter do
+		if i > 0 then
+			for j = 1, maprowsize do
+				if map[i][j] ~= 0 then
+					table.insert(mapmoveobjects, {name = i.."map"..j, x = i, y = j})
+					---Flux.to(...) på objektet
+				end
+			end
+		end
 	end
-	return "touch"
 end
 
+function love.keypressed(key)
+	if player.x ~= nil and player.y ~= nil then
+		if key == "w" then
+			if testMap(0, -1) then
+				if player.lastkey == "a" then
+					flux.to(player, player.speed, {x = math.floor(player.x/player.w)*player.w,y = math.floor((player.y-player.w)/player.w)*player.w})
+				else
+					flux.to(player, player.speed, {x = math.ceil(player.x/player.w)*player.w,y = math.floor((player.y-player.w)/player.w)*player.w})
+				end
+			end
+			player.lastkey = "w"
+		elseif key == "s" then
+			if testMap(0, 1) then
+				if player.lastkey == "a" then
+					flux.to(player, player.speed, {x = math.floor(player.x/player.w)*player.w,y = math.ceil((player.y+player.w)/player.w)*player.w})
+				else
+					flux.to(player, player.speed, {x = math.ceil(player.x/player.w)*player.w,y = math.ceil((player.y+player.w)/player.w)*player.w})
+				end
+			end
+			player.lastkey = "s"
+		elseif key == "a" then
+			if testMap(-1, 0) then
+				if player.lastkey == "w" then
+					flux.to(player, player.speed, {x = math.floor((player.x-player.w)/player.w)*player.w,y = math.floor(player.y/player.w)*player.w})
+				else
+					flux.to(player, player.speed, {x = math.floor((player.x-player.w)/player.w)*player.w,y = math.ceil(player.y/player.w)*player.w})
+				end
+			end
+			player.lastkey = "a"
+		elseif key == "d" then
+			if testMap(1, 0) then
+				if player.lastkey == "w" then
+					flux.to(player, player.speed, {x = math.ceil((player.x+player.w)/player.w)*player.w,y = math.floor(player.y/player.w)*player.w})
+				else
+					flux.to(player, player.speed, {x = math.ceil((player.x+player.w)/player.w)*player.w,y = math.ceil(player.y/player.w)*player.w})
+				end
+			end
+			player.lastkey = "d"
+		end
+	end
+end
+
+function testMap(x, y)
+	if map[math.floor(player.y / player.w) + y][math.floor(player.x / player.w) + x] == 1 then
+		return false
+	end
+	return true
+end
