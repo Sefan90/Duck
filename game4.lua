@@ -1,5 +1,3 @@
-
---TODO: Fixa så att blocken rör sig i olika hastighet. det blir mer logiskt. dvs at det tar lika lång tid för diagonala som horosentala att ta sig till mitten.
 local flux = require "flux"
 
 --TODO Fixa en funktion som kolla collision mot objekt som kommer.
@@ -10,39 +8,39 @@ function love.load()
     mapmoveobjects = {}
 
     life = {
-        x1 = width/2-mapsize, 
-        y1 = height/2-mapsize, 
-        x2 = width/2-mapsize+mapsize*2, 
-        y2 = height/2-mapsize+mapsize*2,
+        x = width/2-mapsize, 
+        y = height/2-mapsize, 
+        w = mapsize*2, 
+        h = mapsize*2,
         alive = true
     }
 
     player = {
         name = 'player',
         up = {
-            x1 = math.floor((width/2)/mapsize)*mapsize-mapsize,
-            y1 = math.floor((height/2)/mapsize)*mapsize-1.5*mapsize,
-            x2 = math.floor((width/2)/mapsize)*mapsize-mapsize+mapsize*2,
-            y2 = math.floor((height/2)/mapsize)*mapsize-1.5*mapsize+mapsize/10},
+            x = math.floor((width/2)/mapsize)*mapsize-mapsize,
+            y = math.floor((height/2)/mapsize)*mapsize-mapsize,
+            w = mapsize*2,
+            h = mapsize/10},
         down = {      
-            x1 = math.floor((width/2)/mapsize)*mapsize-mapsize,
-            y1 = math.floor((height/2)/mapsize)*mapsize+2.5*mapsize,
-            x2 = math.floor((width/2)/mapsize)*mapsize-mapsize+mapsize*2,
-            y2 = math.floor((height/2)/mapsize)*mapsize+2.5*mapsize+mapsize/10},
+            x = math.floor((width/2)/mapsize)*mapsize-mapsize,
+            y = math.floor((height/2)/mapsize)*mapsize+2*mapsize,
+            w = mapsize*2,
+            h = mapsize/10},
         right = {      
-            x1 = math.floor((width/2)/mapsize)*mapsize+1.5*mapsize,
-            y1 = math.floor((height/2)/mapsize)*mapsize-1.25*mapsize,
-            x2 = math.floor((width/2)/mapsize)*mapsize+1.5*mapsize+mapsize/10,
-            y2 = math.floor((height/2)/mapsize)*mapsize-mapsize/2+mapsize*2},
+            x = math.floor((width/2)/mapsize)*mapsize+1.5*mapsize,
+            y = math.floor((height/2)/mapsize)*mapsize-mapsize/2,
+            w = mapsize/10,
+            h = mapsize*2},
         left = {
-            x1 = math.floor((width/2)/mapsize)*mapsize-1.5*mapsize,
-            y1 = math.floor((height/2)/mapsize)*mapsize-mapsize/2,
-            x2 = math.floor((width/2)/mapsize)*mapsize-1.5*mapsize+mapsize/10,
-            y2 = math.floor((height/2)/mapsize)*mapsize-mapsize/2+mapsize*2},
-        x1 = math.floor((width/2)/mapsize)*mapsize-mapsize,
-        y1 = math.floor((height/2)/mapsize)*mapsize-1.5*mapsize,
-        x2 = math.floor((width/2)/mapsize)*mapsize-mapsize+mapsize*2,
-        y2 = math.floor((height/2)/mapsize)*mapsize-1.5*mapsize+mapsize/10,
+            x = math.floor((width/2)/mapsize)*mapsize-1.5*mapsize,
+            y = math.floor((height/2)/mapsize)*mapsize-mapsize/2,
+            w = mapsize/10,
+            h = mapsize*2},
+        x = math.floor((width/2)/mapsize)*mapsize-1.5*mapsize,
+        y = math.floor((height/2)/mapsize)*mapsize-mapsize/2,
+        w = mapsize/10,
+        h = mapsize*2,
         lastkey = nil,
         speed = 0.2
     }
@@ -78,15 +76,8 @@ function love.load()
         end
     end
 
-    boxes = {speed = 0.25, map = {1,0,1,0,1,0,3,0,1,0,1,0,1,0,3,0,1,0,1,0,1,0,3,0,1,0,1,0,1,0,3,0}}
-    for i=1,100 do
-        if i%2==0 then
-            boxes.map[i] = love.math.random(0,4)
-        else
-            boxes.map[i] = 0
-        end
-    end
-    --1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,1,1,1,0,2,2,2,0,3,3,3,0,4,4,4,4
+    boxes = {speed = 0.25, map = {1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,1,1,1,0,2,2,2,0,3,3,3,0,4,4,4,4}}
+
     blocks = createboxes(boxes)
     
     box = {
@@ -172,12 +163,12 @@ function love.draw()
     love.graphics.setColor(30,0,0,255)
     --love.graphics.rectangle('fill', box.x, box.y, box.w, box.h)
     love.graphics.setColor(0,0,0)
-    --love.graphics.rectangle('fill', life.x,life.y,life.w,life.h)
+    love.graphics.rectangle('fill', life.x,life.y,life.w,life.h)
     love.graphics.setColor(255,255,255)
-    --love.graphics.rectangle('line', life.x,life.y,life.w,life.h)
+    love.graphics.rectangle('line', life.x,life.y,life.w,life.h)
     --love.graphics.circle('line', life.x+life.w/2, life.y+life.w/2, life.w, 6)
     love.graphics.setShader(myShader)
-    love.graphics.polygon('fill', player.x1, player.y1, player.x1, player.y2, player.x2, player.y2, player.x2, player.y1)
+    love.graphics.rectangle('fill', player.x, player.y, player.w, player.h)
     love.graphics.setShader()
     love.graphics.print(tostring(life.alive), 10, 10)
     --love.graphics.setColor(255,0,0)
@@ -215,29 +206,38 @@ function drawblocks()
 end
 
 function love.keypressed(key)
-    if player.lastkey ~= key then
+    if player.x ~= nil and player.y ~= nil and player.lastkey ~= key then
         if key == "w" then
-            player.x1 = player.up.x1
-            player.y1 = player.up.y1
-            player.x2 = player.up.x2
-            player.y2 = player.up.y2
+            player.x = player.up.x
+            player.y = player.up.y
+            player.w = player.up.w
+            player.h = player.up.h
         elseif key == "a" then
-            player.x1 = player.left.x1
-            player.y1 = player.left.y1
-            player.x2 = player.left.x2
-            player.y2 = player.left.y2
+            player.x = player.left.x
+            player.y = player.left.y
+            player.w = player.left.w
+            player.h = player.left.h
         elseif key == "s" then
-            player.x1 = player.down.x1
-            player.y1 = player.down.y1
-            player.x2 = player.down.x2
-            player.y2 = player.down.y2
+            player.x = player.down.x
+            player.y = player.down.y
+            player.w = player.down.w
+            player.h = player.down.h
         elseif key == "d" then
-            player.x1 = player.right.x1
-            player.y1 = player.right.y1
-            player.x2 = player.right.x2
-            player.y2 = player.right.y2
+            player.x = player.right.x
+            player.y = player.right.y
+            player.w = player.right.w
+            player.h = player.right.h
         end
     end
+end
+
+function testMap(x, y)
+    if (x < 0 or y < 0) and map[math.floor(player.y / player.w) + y][math.floor(player.x / player.w) + x] == 1 then
+        return false
+    elseif (x > 0 or y > 0) and map[math.ceil(player.y / player.w) + y][math.ceil(player.x / player.w) + x] == 1 then
+        return false
+    end
+    return true
 end
 
 -- Collision detection function;
@@ -245,8 +245,8 @@ end
 -- x1,y1 are the top-left coords of the first box, while w1,h1 are its width and height;
 -- x2,y2,w2 & h2 are the same, but for the second box.
 function CheckCollision(box1,box2)
-    return box1.x1 < box2.x+box2.w and
-        box2.x < box1.x2 and
-        box1.y1 < box2.y+box2.h and
-        box2.y < box1.y2
+    return box1.x < box2.x+box2.w and
+        box2.x < box1.x+box1.w and
+        box1.y < box2.y+box2.h and
+        box2.y < box1.y+box1.h
 end
