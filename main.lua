@@ -1,5 +1,5 @@
+--Game
 
---TODO: Fixa så att blocken rör sig i olika hastighet. det blir mer logiskt. dvs at det tar lika lång tid för diagonala som horosentala att ta sig till mitten.
 local flux = require "flux"
 
 --TODO Fixa en funktion som kolla collision mot objekt som kommer.
@@ -10,64 +10,45 @@ function love.load()
     mapmoveobjects = {}
 
     life = {
-        x1 = width/2-mapsize, 
-        y1 = height/2-mapsize, 
-        x2 = width/2-mapsize+mapsize*2, 
-        y2 = height/2-mapsize+mapsize*2,
+        x = width/2-mapsize, 
+        y = height/2-mapsize, 
+        w = mapsize*2, 
+        h = mapsize*2,
         alive = true
     }
+    colors = {counter = 1 ,maxcounter = 2, current = 1, max = 6, table = {192,64,64}}
 
     player = {
         name = 'player',
         up = {
-            x1 = math.floor((width/2)/mapsize)*mapsize-mapsize,
-            y1 = math.floor((height/2)/mapsize)*mapsize-1.5*mapsize,
-            x2 = math.floor((width/2)/mapsize)*mapsize-mapsize+mapsize*2,
-            y2 = math.floor((height/2)/mapsize)*mapsize-1.5*mapsize+mapsize/10},
+            x = math.floor((width/2)/mapsize)*mapsize-mapsize,
+            y = math.floor((height/2)/mapsize)*mapsize-mapsize*0.75,
+            w = mapsize*2,
+            h = mapsize/10},
         down = {      
-            x1 = math.floor((width/2)/mapsize)*mapsize-mapsize,
-            y1 = math.floor((height/2)/mapsize)*mapsize+2.5*mapsize,
-            x2 = math.floor((width/2)/mapsize)*mapsize-mapsize+mapsize*2,
-            y2 = math.floor((height/2)/mapsize)*mapsize+2.5*mapsize+mapsize/10},
+            x = math.floor((width/2)/mapsize)*mapsize-mapsize,
+            y = math.floor((height/2)/mapsize)*mapsize+1.65*mapsize,
+            w = mapsize*2,
+            h = mapsize/10},
         right = {      
-            x1 = math.floor((width/2)/mapsize)*mapsize+1.5*mapsize,
-            y1 = math.floor((height/2)/mapsize)*mapsize-1.25*mapsize,
-            x2 = math.floor((width/2)/mapsize)*mapsize+1.5*mapsize+mapsize/10,
-            y2 = math.floor((height/2)/mapsize)*mapsize-mapsize/2+mapsize*2},
+            x = math.floor((width/2)/mapsize)*mapsize+1.15*mapsize,
+            y = math.floor((height/2)/mapsize)*mapsize-mapsize/2,
+            w = mapsize/10,
+            h = mapsize*2},
         left = {
-            x1 = math.floor((width/2)/mapsize)*mapsize-1.5*mapsize,
-            y1 = math.floor((height/2)/mapsize)*mapsize-mapsize/2,
-            x2 = math.floor((width/2)/mapsize)*mapsize-1.5*mapsize+mapsize/10,
-            y2 = math.floor((height/2)/mapsize)*mapsize-mapsize/2+mapsize*2},
-        x1 = math.floor((width/2)/mapsize)*mapsize-mapsize,
-        y1 = math.floor((height/2)/mapsize)*mapsize-1.5*mapsize,
-        x2 = math.floor((width/2)/mapsize)*mapsize-mapsize+mapsize*2,
-        y2 = math.floor((height/2)/mapsize)*mapsize-1.5*mapsize+mapsize/10,
+            x = math.floor((width/2)/mapsize)*mapsize-1.25*mapsize,
+            y = math.floor((height/2)/mapsize)*mapsize-mapsize/2,
+            w = mapsize/10,
+            h = mapsize*2},
+        current = {
+            x = math.floor((width/2)/mapsize)*mapsize-mapsize,
+            y = math.floor((height/2)/mapsize)*mapsize-mapsize,
+            w = mapsize*2,
+            h = mapsize/10},
         lastkey = nil,
         speed = 0.2
     }
-
-    t = 0
-    myShader = love.graphics.newShader [[
-        uniform float time;
-        vec4 effect( vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords )
-        {
-            vec4 pixel = Texel(texture, texture_coords );//This is the current pixel color
-            return pixel*color;
-            //return vec4(cos(time/2),sin(time)+cos(time),sin(time)-cos(time),255);
-        }
-        ]]
-    
-    bg1Shader = love.graphics.newShader [[
-        uniform float time;
-        vec4 effect( vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords )
-        {
-            vec4 pixel = Texel(texture, texture_coords );//This is the current pixel color
-            //return pixel*color;
-            return vec4(0,sin(time)+cos(time),cos(time),255);
-        }
-        ]]
-
+    player.current = player.up
 
     map = {}
     for i = 1, 13 do
@@ -78,7 +59,9 @@ function love.load()
         end
     end
 
-    boxes = {speed = 0.25, map = {1,0,1,0,1,0,3,0,1,0,1,0,1,0,3,0,1,0,1,0,1,0,3,0,1,0,1,0,1,0,3,0}}
+    bgchange = {time={1,2,3}, color={{127,64,0},{0,127,64},{64,0,127}}}
+
+    boxes = {speed = 0.25, map = {1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,1,1,1,0,2,2,2,0,3,3,3,0,4,4,4,4}}
     for i=1,100 do
         if i%2==0 then
             boxes.map[i] = love.math.random(0,4)
@@ -86,36 +69,32 @@ function love.load()
             boxes.map[i] = 0
         end
     end
-    --1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,0,2,0,3,0,4,0,1,1,1,1,0,2,2,2,0,3,3,3,0,4,4,4,4
-    blocks = createboxes(boxes)
-    
-    box = {
-        name = 'box',
-        x = math.floor((width/2)/mapsize)*mapsize,
-        y = height,
-        w = mapsize/2,
-        h = mapsize/2,
-        speed = 3
-    }
 
+    blocks = createboxes(boxes)
     explode = {}
+    t = 0
 end
 
 function love.update(dt)
-    t = t + dt/2
-    --myShader:send("time", t)
-    bg1Shader:send("time", t)
-    if box.y >= height then
-        box.y = 0
-        box.x = math.floor((width/2)/mapsize)*mapsize-3*mapsize+math.random(5)*mapsize
-        flux.to(box, box.speed, {x = box.x,y = height}):ease("linear")
-    end
+    t = t + dt
+    -- if t%1 < 0.5 then
+    --     life.x = width/2-mapsize
+    --     life.y = height/2-mapsize
+    --     life.w = mapsize*2
+    --     life.h = mapsize*2
+    -- else
+    --     life.x = width/2-mapsize*0.9
+    --     life.y = height/2-mapsize*0.9
+    --     life.w = mapsize*1.8
+    --     life.h = mapsize*1.8
+    -- end
+
     moveboxes()
     flux.update(dt)
 
     local destroyblocks = {}
     for i = 1, #blocks do
-        if CheckCollision(player,blocks[i]) then
+        if CheckCollision(player.current,blocks[i]) then
             table.insert(destroyblocks, {id = i, r = 0, g = 255, b = 0})
         elseif CheckCollision(life,blocks[i]) then
             life.alive = false
@@ -148,41 +127,38 @@ function love.update(dt)
 
     for i = #destroyexplode, 1, -1  do
         table.remove(explode,destroyexplode[i])
+        if colors.table[1] >= 192 and colors.table[2] < 192 and colors.table[3] <= 64 then
+            colors.table[2] = colors.table[2] + 1
+        elseif colors.table[1] > 64 and colors.table[2] >= 192 and colors.table[3] <= 64 then
+            colors.table[1] = colors.table[1] - 1
+        elseif colors.table[1] <= 64 and colors.table[2] >= 192 and colors.table[3] < 192 then
+            colors.table[3] = colors.table[3] + 1
+        elseif colors.table[1] <= 64 and colors.table[2] > 64 and colors.table[3] >= 192 then
+            colors.table[2] = colors.table[2] - 1
+        elseif colors.table[1] < 192 and colors.table[2] <= 64 and colors.table[3] >= 192 then
+            colors.table[1] = colors.table[1] + 1
+        elseif colors.table[1] >= 192 and colors.table[2] <= 64 and colors.table[3] > 64 then
+            colors.table[3] = colors.table[3] - 1
+        end
     end
 end
 
 function love.draw()
-    --love.graphics.setBackgroundColor(26, 68, 144)
-    love.graphics.setColor(76, 133, 204,255)
-    --love.graphics.setShader(bg1Shader)
-    --love.graphics.polygon("fill", life.x+life.w, life.y+life.h, life.x+life.w, life.y, width, 0, width, height)
-    --love.graphics.polygon("fill", life.x, life.y, life.x, life.y+life.h, 0, height, 0, 0)
-    love.graphics.setColor(255, 133, 204,255)
-    --love.graphics.rectangle("fill", life.x, life.y, mapsize*5, mapsize*5)
-    --love.graphics.setShader()
-    love.graphics.setColor(255,255,255,255)
-
-    --love.graphics.setColor(64,127,255,255)
-    --love.graphics.rectangle('fill', width/2-200,height/2-200,400,400)
-    for i = 1, #explode do
-        --love.graphics.setColor(explode[i].r,explode[i].g,explode[i].b,explode[i].alpha)
-        love.graphics.setColor(255,255,255,explode[i].alpha)
+    love.graphics.setBackgroundColor(100,0,245,255)
+       for i = 1, #explode do
+        love.graphics.setColor(0,0,0,explode[i].alpha)
         love.graphics.arc('fill','open', explode[i].x, explode[i].y, explode[i].w,explode[i].angle1,explode[i].angle2)
     end
-    love.graphics.setColor(30,0,0,255)
-    --love.graphics.rectangle('fill', box.x, box.y, box.w, box.h)
+    love.graphics.setColor(155,255,10,255)
+    love.graphics.rectangle('fill', life.x,life.y,life.w,life.h)
+    love.graphics.setColor(150,245,0,255)
+    love.graphics.rectangle('line', life.x,life.y,life.w,life.h)
     love.graphics.setColor(0,0,0)
-    --love.graphics.rectangle('fill', life.x,life.y,life.w,life.h)
-    love.graphics.setColor(255,255,255)
-    --love.graphics.rectangle('line', life.x,life.y,life.w,life.h)
-    --love.graphics.circle('line', life.x+life.w/2, life.y+life.w/2, life.w, 6)
-    love.graphics.setShader(myShader)
-    love.graphics.polygon('fill', player.x1, player.y1, player.x1, player.y2, player.x2, player.y2, player.x2, player.y1)
-    love.graphics.setShader()
+    love.graphics.rectangle('fill', player.current.x, player.current.y, player.current.w, player.current.h)
     love.graphics.print(tostring(life.alive), 10, 10)
-    --love.graphics.setColor(255,0,0)
+    love.graphics.print("lol",20,20)
     drawblocks()
-    love.graphics.setColor(255,255,255,255)
+    love.graphics.setColor(0,0,0,255)
 end
 
 function createboxes(boxes)
@@ -209,7 +185,6 @@ end
 
 function drawblocks()
     for i = 1, #blocks do
-        --love.graphics.rectangle('fill', blocks[i].x, blocks[i].y, mapsize, mapsize)
         love.graphics.circle('fill', blocks[i].x+mapsize/2, blocks[i].y+mapsize/2, mapsize/2,4)
     end
 end
@@ -217,25 +192,13 @@ end
 function love.keypressed(key)
     if player.lastkey ~= key then
         if key == "w" then
-            player.x1 = player.up.x1
-            player.y1 = player.up.y1
-            player.x2 = player.up.x2
-            player.y2 = player.up.y2
-        elseif key == "a" then
-            player.x1 = player.left.x1
-            player.y1 = player.left.y1
-            player.x2 = player.left.x2
-            player.y2 = player.left.y2
+            player.current = player.up
         elseif key == "s" then
-            player.x1 = player.down.x1
-            player.y1 = player.down.y1
-            player.x2 = player.down.x2
-            player.y2 = player.down.y2
+            player.current = player.down
+        elseif key == "a" then
+            player.current = player.left
         elseif key == "d" then
-            player.x1 = player.right.x1
-            player.y1 = player.right.y1
-            player.x2 = player.right.x2
-            player.y2 = player.right.y2
+            player.current = player.right
         end
     end
 end
@@ -245,8 +208,12 @@ end
 -- x1,y1 are the top-left coords of the first box, while w1,h1 are its width and height;
 -- x2,y2,w2 & h2 are the same, but for the second box.
 function CheckCollision(box1,box2)
-    return box1.x1 < box2.x+box2.w and
-        box2.x < box1.x2 and
-        box1.y1 < box2.y+box2.h and
-        box2.y < box1.y2
+    return box1.x < box2.x+box2.w and
+        box2.x < box1.x+box1.w and
+        box1.y < box2.y+box2.h and
+        box2.y < box1.y+box1.h
+end
+
+function colorlist(t)
+
 end
